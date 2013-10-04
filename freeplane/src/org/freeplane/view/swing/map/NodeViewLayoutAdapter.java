@@ -260,6 +260,7 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
         		}
         	}
         }
+
         int left = 0;
         int y = 0;
 
@@ -275,22 +276,37 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 
         final int summaryBaseX[] = new int[highestSummaryLevel];
 
-        int level = highestSummaryLevel;
+        final int[] levels = new int[childrenOnSide.size()];
+        {
+        	int level = levels[0] = highestSummaryLevel;
+        	int levelIndex = 1;
+        	for (int i: childrenOnSide) {
+        		final NodeView child = (NodeView) getView().getComponent(i);
 
+        		final boolean isSummary = child.isSummary();
+        		final boolean isItem = !isSummary || useSummaryAsItem;
+        		final int childHeight = child.getHeight() - 2 * getSpaceAround();
+        		if(isItem){
+        			if (childHeight != 0)
+        				useSummaryAsItem = false;
+        			else if(level > 0)
+        				useSummaryAsItem = true;
+        			level = 0;
+        		}
+        		else{
+        			level++;
+        		}
+        		levels[levelIndex] = level;
+        		levelIndex++;
+        	}
+        }
+
+        int levelIndex = 1;
         for (int i: childrenOnSide) {
             final NodeView child = (NodeView) getView().getComponent(i);
-
-            final boolean isSummary = child.isSummary();
-            final boolean isItem = !isSummary || useSummaryAsItem;
-            final int oldLevel = level;
-            if(isItem){
-            	if(level > 0)
-            		useSummaryAsItem = true;
-                level = 0;
-            }
-            else{
-                level++;
-            }
+            int oldLevel = levels[levelIndex - 1];
+            int level = levels[levelIndex++];
+            boolean isItem = level == 0;
 
             final int childCloudHeigth = getAdditionalCloudHeigth(child);
             final int childContentHeight = child.getContent().getHeight() + childCloudHeigth;
@@ -303,11 +319,11 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
             	childHGap = child.getZoomed(LocationModel.HGAP);
             else
             	childHGap = 0;
-            final int childHeight = child.getHeight() - 2 * getSpaceAround();
 
             boolean isFreeNode = child.isFree();
 			data.free[i] = isFreeNode;
 			data.summary[i] = ! isItem;
+			final int childHeight = child.getHeight() - 2 * getSpaceAround();
 			if(isItem) {
 				if (isFreeNode){
 				data.ly[i] = childShiftY - childContentShift-childCloudHeigth/2 - getSpaceAround();
@@ -356,7 +372,6 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 				}
 	            if (childHeight != 0) {
 	                visibleChildCounter++;
-	                useSummaryAsItem = false;
 				}
 			}
             else{
