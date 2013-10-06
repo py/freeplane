@@ -401,19 +401,11 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 				int level = levels[levelIndex++];
 				final int x;
 				final int baseX;
-				if (level > 0) {
-					if (child.isFirstGroupNode()) {
-						summaryBaseX[level] = 0;
-					}
-					baseX = summaryBaseX[level - 1];
-				}
-				else {
+				final boolean isItem = level == 0;
+				if (isItem) {
 					if (!child.isFree()) {
 						final int oldLevel = levels[levelIndex - 2];
-						if (oldLevel > 0) {
-							summaryBaseX[0] = 0;
-						}
-						else if (child.isFirstGroupNode()) {
+						if (oldLevel > 0 || child.isFirstGroupNode()) {
 							summaryBaseX[0] = 0;
 						}
 					}
@@ -423,6 +415,12 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 					else {
 						baseX = contentWidth;
 					}
+				}
+                else {
+					if (child.isFirstGroupNode()) {
+						summaryBaseX[level] = 0;
+					}
+					baseX = summaryBaseX[level - 1];
 				}
 				final int childHGap;
 				if (child.isContentVisible())
