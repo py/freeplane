@@ -316,6 +316,22 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 						data.ly[i] = childShiftY - childContentShift - childCloudHeigth / 2 - getSpaceAround();
 					}
 					else {
+						childContentHeightSum += childContentHeight;
+						final int oldLevel = levels[levelIndex - 2];
+						final boolean followsSummary = oldLevel > 0;
+						if (followsSummary) {
+							for (int j = 0; j < oldLevel; j++) {
+								groupStart[j] = i;
+								groupStartContentHeightSum[j] = childContentHeightSum;
+								groupStartY[j] = Integer.MAX_VALUE;
+								groupEndY[j] = Integer.MIN_VALUE;
+							}
+						}
+						else if (child.isFirstGroupNode()) {
+							groupStartContentHeightSum[0] = childContentHeightSum;
+							groupStart[0] = i;
+						}
+
 						if (childShiftY < 0 || visibleChildCounter == 0) {
 							top += childShiftY;
 						}
@@ -334,20 +350,6 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 						if (childHeight != 0) {
 							y += childHeight + getVGap();
 							y -= child.getBottomOverlap();
-						}
-						childContentHeightSum += childContentHeight;
-						final int oldLevel = levels[levelIndex - 2];
-						if (oldLevel > 0) {
-							for (int j = 0; j < oldLevel; j++) {
-								groupStart[j] = i;
-								groupStartY[j] = Integer.MAX_VALUE;
-								groupEndY[j] = Integer.MIN_VALUE;
-								groupStartContentHeightSum[j] = childContentHeightSum;
-							}
-						}
-						else if (child.isFirstGroupNode()) {
-							groupStartContentHeightSum[0] = childContentHeightSum;
-							groupStart[0] = i;
 						}
 						if (childHeight != 0) {
 							if (visibleChildCounter > 0)
@@ -405,21 +407,14 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 				if (isItem) {
 					if (!child.isFree()) {
 						final int oldLevel = levels[levelIndex - 2];
-						if (oldLevel > 0 || child.isFirstGroupNode()) {
-							summaryBaseX[0] = 0;
-						}
+						if (oldLevel > 0 || child.isFirstGroupNode())
+	                        summaryBaseX[0] = 0;
 					}
-					if (child.isLeft() != child.isFree()) {
-						baseX = 0;
-					}
-					else {
-						baseX = contentWidth;
-					}
+					baseX = child.isLeft() != child.isFree() ? 0 : contentWidth;
 				}
                 else {
-					if (child.isFirstGroupNode()) {
-						summaryBaseX[level] = 0;
-					}
+					if (child.isFirstGroupNode())
+	                    summaryBaseX[level] = 0;
 					baseX = summaryBaseX[level - 1];
 				}
 				final int childHGap;
