@@ -246,7 +246,7 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 		int highestSummaryLevel = highestSummaryLevel(childrenOnSide);
 		final int[] levels = levels(childrenOnSide, highestSummaryLevel);
 		setChildrenFreeProperty(data, childrenOnSide);
-		int top = calcRelativeYPositions(childrenOnSide, isLeft, data, highestSummaryLevel, levels);
+		int top = calcYPositions(childrenOnSide, isLeft, data, highestSummaryLevel, levels);
 		int childContentHeightSum = calcAccumulatedChildrenContentHeight(childrenOnSide, highestSummaryLevel, levels);
 		top += (contentHeight - childContentHeightSum) / 2;
 		calculateRelativeXPositions(childrenOnSide, highestSummaryLevel, levels, data);
@@ -352,16 +352,13 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 	    return childContentHeightSum;
     }
 
-	private int calcRelativeYPositions(List<Integer> childrenOnSide, final boolean isLeft, final LayoutData data,
+	private int calcYPositions(List<Integer> childrenOnSide, final boolean isLeft, final LayoutData data,
                                        int highestSummaryLevel, final int[] levels) {
 	    int top = 0;
 		{
 			int y = 0;
-			int visibleChildCounter = 0;
-			final int[] groupStart = new int[highestSummaryLevel];
-			final int[] groupStartContentHeightSum = new int[highestSummaryLevel];
-			final int[] groupStartY = new int[highestSummaryLevel];
-			final int[] groupEndY = new int[highestSummaryLevel];
+			boolean visibleChildFound = false;
+			final GroupMargins[] groups = GroupMargins.create(highestSummaryLevel);
 			int levelIndex = 1;
 			for (int i : childrenOnSide) {
 				final NodeView child = (NodeView) getView().getComponent(i);
@@ -377,29 +374,21 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 					if (!child.isFree()) {
 						final int oldLevel = levels[levelIndex - 2];
 						final boolean followsSummary = oldLevel > 0;
-						if (followsSummary) {
-							for (int j = 0; j < oldLevel; j++) {
-								groupStart[j] = i;
-								groupStartY[j] = Integer.MAX_VALUE;
-								groupEndY[j] = Integer.MIN_VALUE;
-							}
-						}
-						else if (child.isFirstGroupNode()) {
-							groupStart[0] = i;
-						}
+						if (followsSummary)
+	                        for (int j = 0; j < oldLevel; j++)
+								groups[j].beginFrom(i);
+                        else if (child.isFirstGroupNode())
+	                        groups[0].start = i;
 
-						if (childShiftY < 0 || visibleChildCounter == 0) {
-							top += childShiftY;
-						}
-						top -= childContentShift;
-						top += child.getTopOverlap();
+						if (childShiftY < 0 || !visibleChildFound)
+	                        top += childShiftY;
 						y -= child.getTopOverlap();
 						if (childShiftY < 0) {
 							data.ly[i] = y;
 							y -= childShiftY;
 						}
 						else {
-							if (visibleChildCounter > 0)
+							if (visibleChildFound)
 								y += childShiftY;
 							data.ly[i] = y;
 						}
@@ -407,29 +396,28 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 							y += childHeight + getVGap();
 							y -= child.getBottomOverlap();
 						}
+						top -= childContentShift;
+						top += child.getTopOverlap();
 					}
                     else
 	                    data.ly[i] = childShiftY - childContentShift - childCloudHeigth / 2 - getSpaceAround();
-					if (childHeight != 0) {
-						visibleChildCounter++;
-					}
+					if (childHeight != 0)
+	                    visibleChildFound = true;
 				}
 				else {
 					final int itemLevel = level - 1;
 					if (child.isFirstGroupNode()) {
-						groupStartContentHeightSum[level] = groupStartContentHeightSum[itemLevel];
-						groupStart[level] = groupStart[itemLevel];
+						groups[level].start = groups[itemLevel].start;
 					}
-					int summaryY = (groupStartY[itemLevel] + groupEndY[itemLevel]) / 2 - childContentHeight / 2
+					int summaryY = (groups[itemLevel].startY + groups[itemLevel].endY) / 2 - childContentHeight / 2
 					        + childShiftY - (child.getContent().getY() - childCloudHeigth / 2 - getSpaceAround());
 					data.ly[i] = summaryY;
 					if (!child.isFree()) {
-						final int deltaY = summaryY - groupStartY[itemLevel] + child.getTopOverlap();
+						final int deltaY = summaryY - groups[itemLevel].startY + child.getTopOverlap();
 						if (deltaY < 0) {
-							top += deltaY;
 							y -= deltaY;
 							summaryY -= deltaY;
-							for (int j = groupStart[itemLevel]; j <= i; j++) {
+							for (int j = groups[itemLevel].start; j <= i; j++) {
 								NodeView groupItem = (NodeView) getView().getComponent(j);
 								if (groupItem.isLeft() == isLeft && (data.summary[j] || !data.free[j]))
 									data.ly[j] -= deltaY;
@@ -439,17 +427,15 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 							summaryY += childHeight + getVGap() - child.getBottomOverlap();
 						}
 						y = Math.max(y, summaryY);
+						if (deltaY < 0)
+							top += deltaY;
 					}
 				}
 				if(! isItem || ! child.isFree()){
-					if(child.isFirstGroupNode()){
-						groupStartY[level] = data.ly[i] + child.getTopOverlap();
-						groupEndY[level] = data.ly[i] + childHeight - child.getBottomOverlap();
-					}
-					else{
-						groupStartY[level] = Math.min(groupStartY[level],data.ly[i] + child.getTopOverlap());
-						groupEndY[level] = Math.max(data.ly[i] + childHeight - child.getBottomOverlap(), groupEndY[level]);
-					}
+					if(child.isFirstGroupNode())
+	                    groups[level].set(data.ly[i] + child.getTopOverlap(), data.ly[i] + childHeight - child.getBottomOverlap());
+                    else
+	                    groups[level].extend(data.ly[i] + child.getTopOverlap(), data.ly[i] + childHeight - child.getBottomOverlap());
 				}
 			}
 		}
