@@ -240,57 +240,12 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 	}
 
 	protected void calcLayout(final boolean isLeft, final LayoutData data) {
-		List<Integer> childrenOnSide = new ArrayList<Integer>(getChildCount());
-		for (int i = 0; i < getChildCount(); i++) {
-			final NodeView child = (NodeView) getView().getComponent(i);
-			if (child.isLeft() == isLeft) {
-				childrenOnSide.add(i);
-			}
-		}
+		List<Integer> childrenOnSide = childrenOnSide(isLeft);
 		if (childrenOnSide.size() == 0)
 			return;
-		int highestSummaryLevel = 1;
-		{
-			int level = 1;
-			for (int i : childrenOnSide) {
-				final NodeView child = (NodeView) getView().getComponent(i);
-				if (child.isSummary()) {
-					level++;
-					highestSummaryLevel = Math.max(highestSummaryLevel, level);
-				}
-				else {
-					level = 1;
-				}
-			}
-		}
-		final int[] levels = new int[childrenOnSide.size() + 1];
-		{
-			boolean useSummaryAsItem = true;
-			int level = levels[0] = highestSummaryLevel;
-			int levelIndex = 1;
-			for (int i : childrenOnSide) {
-				final NodeView child = (NodeView) getView().getComponent(i);
-				final boolean isSummary = child.isSummary();
-				final boolean isItem = !isSummary || useSummaryAsItem;
-				final int childHeight = child.getHeight() - 2 * getSpaceAround();
-				if (isItem) {
-					if (childHeight != 0)
-						useSummaryAsItem = false;
-					else if (level > 0)
-						useSummaryAsItem = true;
-					level = 0;
-				}
-				else {
-					level++;
-				}
-				levels[levelIndex] = level;
-				levelIndex++;
-			}
-		}
-		for (int i : childrenOnSide) {
-			final NodeView child = (NodeView) getView().getComponent(i);
-			data.free[i] = child.isFree();
-		}
+		int highestSummaryLevel = highestSummaryLevel(childrenOnSide);
+		final int[] levels = levels(childrenOnSide, highestSummaryLevel);
+		setChildrenFreeProperty(data, childrenOnSide);
 		int childContentHeightSum = 0;
 		int top = 0;
 		{
@@ -438,6 +393,70 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 		}
 		setData(data, isLeft, left, childContentHeightSum, top);
 	}
+
+	private void setChildrenFreeProperty(final LayoutData data, List<Integer> childrenOnSide) {
+	    for (int i : childrenOnSide) {
+			final NodeView child = (NodeView) getView().getComponent(i);
+			data.free[i] = child.isFree();
+		}
+    }
+
+	private int[] levels(List<Integer> childrenOnSide, int highestSummaryLevel) {
+	    final int[] levels = new int[childrenOnSide.size() + 1];
+		{
+			boolean useSummaryAsItem = true;
+			int level = levels[0] = highestSummaryLevel;
+			int levelIndex = 1;
+			for (int i : childrenOnSide) {
+				final NodeView child = (NodeView) getView().getComponent(i);
+				final boolean isSummary = child.isSummary();
+				final boolean isItem = !isSummary || useSummaryAsItem;
+				final int childHeight = child.getHeight() - 2 * getSpaceAround();
+				if (isItem) {
+					if (childHeight != 0)
+						useSummaryAsItem = false;
+					else if (level > 0)
+						useSummaryAsItem = true;
+					level = 0;
+				}
+				else {
+					level++;
+				}
+				levels[levelIndex] = level;
+				levelIndex++;
+			}
+		}
+	    return levels;
+    }
+
+	private int highestSummaryLevel(List<Integer> childrenOnSide) {
+	    int highestSummaryLevel = 1;
+		{
+			int level = 1;
+			for (int i : childrenOnSide) {
+				final NodeView child = (NodeView) getView().getComponent(i);
+				if (child.isSummary()) {
+					level++;
+					highestSummaryLevel = Math.max(highestSummaryLevel, level);
+				}
+				else {
+					level = 1;
+				}
+			}
+		}
+	    return highestSummaryLevel;
+    }
+
+	private List<Integer> childrenOnSide(final boolean isLeft) {
+	    List<Integer> childrenOnSide = new ArrayList<Integer>(getChildCount());
+		for (int i = 0; i < getChildCount(); i++) {
+			final NodeView child = (NodeView) getView().getComponent(i);
+			if (child.isLeft() == isLeft) {
+				childrenOnSide.add(i);
+			}
+		}
+	    return childrenOnSide;
+    }
 
 	private void setData(final LayoutData data, boolean isLeft, int left, int childContentHeight, int top) {
 		if (!isLeft && data.leftDataSet || isLeft && data.rightDataSet) {
