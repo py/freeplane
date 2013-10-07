@@ -249,55 +249,59 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 		int top = calcRelativeYPositions(childrenOnSide, isLeft, data, highestSummaryLevel, levels);
 		int childContentHeightSum = calcAccumulatedChildrenContentHeight(childrenOnSide, highestSummaryLevel, levels);
 		top += (contentHeight - childContentHeightSum) / 2;
-		int left = calculateRelativeXPositions(childrenOnSide, highestSummaryLevel, levels, data);
+		calculateRelativeXPositions(childrenOnSide, highestSummaryLevel, levels, data);
+		int left = calculateLeft(childrenOnSide, data);
 		setData(data, isLeft, left, childContentHeightSum, top);
 	}
 
-	private int calculateRelativeXPositions(List<Integer> childrenOnSide, int highestSummaryLevel, final int[] levels,
+	private void calculateRelativeXPositions(List<Integer> childrenOnSide, int highestSummaryLevel, final int[] levels,
                                             final LayoutData data) {
-	    int left = 0;
-		{
-			int levelIndex = 1;
-			final int summaryBaseX[] = new int[highestSummaryLevel];
-			for (int i : childrenOnSide) {
-				final NodeView child = (NodeView) getView().getComponent(i);
-				int level = levels[levelIndex++];
-				final int x;
-				final int baseX;
-				final boolean isItem = level == 0;
-				if (isItem) {
-					if (!child.isFree()) {
-						final int oldLevel = levels[levelIndex - 2];
-						if (oldLevel > 0 || child.isFirstGroupNode())
-	                        summaryBaseX[0] = 0;
-					}
-					baseX = child.isLeft() != child.isFree() ? 0 : contentWidth;
+		int levelIndex = 1;
+		final int summaryBaseX[] = new int[highestSummaryLevel];
+		for (int i : childrenOnSide) {
+			final NodeView child = (NodeView) getView().getComponent(i);
+			int level = levels[levelIndex++];
+			final int x;
+			final int baseX;
+			final boolean isItem = level == 0;
+			if (isItem) {
+				if (!child.isFree()) {
+					final int oldLevel = levels[levelIndex - 2];
+					if (oldLevel > 0 || child.isFirstGroupNode())
+						summaryBaseX[0] = 0;
 				}
-                else {
-					if (child.isFirstGroupNode())
-	                    summaryBaseX[level] = 0;
-					baseX = summaryBaseX[level - 1];
-				}
-				final int childHGap;
-				if (child.isContentVisible())
-					childHGap = child.getHGap();
-				else if (child.isSummary())
-					childHGap = child.getZoomed(LocationModel.HGAP);
-				else
-					childHGap = 0;
-				if (child.isLeft()) {
-					x = baseX - childHGap - child.getContent().getX() - child.getContent().getWidth();
-					summaryBaseX[level] = Math.min(summaryBaseX[level], x + getSpaceAround());
-				}
-				else {
-					x = baseX + childHGap - child.getContent().getX();
-					summaryBaseX[level] = Math.max(summaryBaseX[level], x + child.getWidth() - getSpaceAround());
-				}
-				left = Math.min(left, x);
-				data.lx[i] = x;
+				baseX = child.isLeft() != child.isFree() ? 0 : contentWidth;
 			}
+			else {
+				if (child.isFirstGroupNode())
+					summaryBaseX[level] = 0;
+				baseX = summaryBaseX[level - 1];
+			}
+			final int childHGap;
+			if (child.isContentVisible())
+				childHGap = child.getHGap();
+			else if (child.isSummary())
+				childHGap = child.getZoomed(LocationModel.HGAP);
+			else
+				childHGap = 0;
+			if (child.isLeft()) {
+				x = baseX - childHGap - child.getContent().getX() - child.getContent().getWidth();
+				summaryBaseX[level] = Math.min(summaryBaseX[level], x + getSpaceAround());
+			}
+			else {
+				x = baseX + childHGap - child.getContent().getX();
+				summaryBaseX[level] = Math.max(summaryBaseX[level], x + child.getWidth() - getSpaceAround());
+			}
+			data.lx[i] = x;
 		}
-	    return left;
+    }
+
+	private int calculateLeft(List<Integer> childrenOnSide, final LayoutData data) {
+	    int left = 0;
+		for (int i : childrenOnSide) {
+			left = Math.min(left, data.lx[i]);
+		}
+		return left;
     }
 
 	private int calcAccumulatedChildrenContentHeight(List<Integer> childrenOnSide, int highestSummaryLevel,
