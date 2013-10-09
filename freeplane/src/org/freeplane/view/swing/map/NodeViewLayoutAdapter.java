@@ -406,18 +406,19 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 				}
 				else {
 					final int itemLevel = level - 1;
+					final GroupMargins groupMargins = groups[itemLevel];
 					if (child.isFirstGroupNode()) {
-						groups[level].start = groups[itemLevel].start;
+						groups[level].start = groupMargins.start;
 					}
-					int summaryY = (groups[itemLevel].startY + groups[itemLevel].endY) / 2 - childContentHeight / 2
+					int summaryY = (groupMargins.startY + groupMargins.endY) / 2 - childContentHeight / 2
 					        + childShiftY - (child.getContent().getY() - childCloudHeigth / 2 - getSpaceAround());
 					data.ly[i] = summaryY;
 					if (!child.isFree()) {
-						final int deltaY = summaryY - groups[itemLevel].startY + child.getTopOverlap();
+						final int deltaY = summaryY - groupMargins.startY + child.getTopOverlap();
 						if (deltaY < 0) {
 							y -= deltaY;
 							summaryY -= deltaY;
-							for (int j = groups[itemLevel].start; j <= i; j++) {
+							for (int j = groupMargins.start; j <= i; j++) {
 								NodeView groupItem = (NodeView) getView().getComponent(j);
 								if (groupItem.isLeft() == isLeft && (data.summary[j] || !data.free[j]))
 									data.ly[j] -= deltaY;
