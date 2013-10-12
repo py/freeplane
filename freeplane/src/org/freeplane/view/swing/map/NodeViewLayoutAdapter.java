@@ -239,19 +239,19 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 		}
 	}
 
-	protected void calcLayout(final boolean isLeft, final LayoutData data) {
-		List<Integer> childrenOnSide = childrenOnSide(isLeft);
+	protected void calcLayout(final boolean calculateOnLeftSide, final LayoutData data) {
+		List<Integer> childrenOnSide = childrenOnSide(calculateOnLeftSide);
 		if (childrenOnSide.size() == 0)
 			return;
 		int highestSummaryLevel = highestSummaryLevel(childrenOnSide);
 		final int[] levels = levels(childrenOnSide, highestSummaryLevel);
 		setChildrenFreeProperty(data, childrenOnSide);
-		int top = calcYPositions(childrenOnSide, isLeft, data, highestSummaryLevel, levels);
+		int top = calcYPositions(childrenOnSide, calculateOnLeftSide, data, highestSummaryLevel, levels);
 		int childContentHeightSum = calcAccumulatedChildrenContentHeight(childrenOnSide, highestSummaryLevel, levels);
 		top += (contentHeight - childContentHeightSum) / 2;
 		calculateRelativeXPositions(childrenOnSide, highestSummaryLevel, levels, data);
 		int left = calculateLeft(childrenOnSide, data);
-		setData(data, isLeft, left, childContentHeightSum, top);
+		setData(data, calculateOnLeftSide, left, childContentHeightSum, top);
 	}
 
 	private void calculateRelativeXPositions(List<Integer> childrenOnSide, int highestSummaryLevel, final int[] levels,
@@ -352,95 +352,25 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 	    return childContentHeightSum;
     }
 
-	private int calcYPositions(List<Integer> childrenOnSide, final boolean isLeft, final LayoutData data,
+	private int calcYPositions(List<Integer> childrenOnSide, final boolean calculateOnLeftSide, final LayoutData data,
                                        int highestSummaryLevel, final int[] levels) {
-	    int top = 0;
-		{
-			int y = 0;
-			boolean visibleChildFound = false;
-			final GroupMargins[] groups = GroupMargins.create(highestSummaryLevel);
-			int levelIndex = 1;
-			for (int i : childrenOnSide) {
-				final NodeView child = (NodeView) getView().getComponent(i);
-				int level = levels[levelIndex++];
-				boolean isItem = level == 0;
-				data.summary[i] = !isItem;
-				final int childHeight = child.getHeight() - 2 * getSpaceAround();
-				final int childCloudHeigth = getAdditionalCloudHeigth(child);
-				final int childContentHeight = child.getContent().getHeight() + childCloudHeigth;
-				final int childShiftY = child.isContentVisible() ? child.getShift() : 0;
-				final int childContentShift = child.getContent().getY() - childCloudHeigth / 2 - getSpaceAround();
-				if (isItem) {
-					if (!child.isFree()) {
-						final int oldLevel = levels[levelIndex - 2];
-						final boolean followsSummary = oldLevel > 0;
-						if (followsSummary)
-	                        for (int j = 0; j < oldLevel; j++)
-								groups[j].beginFrom(i);
-                        else if (child.isFirstGroupNode())
-	                        groups[0].start = i;
-
-						if (childShiftY < 0 || !visibleChildFound)
-	                        top += childShiftY;
-						y -= child.getTopOverlap();
-						if (childShiftY < 0) {
-							data.ly[i] = y;
-							y -= childShiftY;
-						}
-						else {
-							if (visibleChildFound)
-								y += childShiftY;
-							data.ly[i] = y;
-						}
-						if (childHeight != 0) {
-							y += childHeight + getVGap();
-							y -= child.getBottomOverlap();
-						}
-						top -= childContentShift;
-						top += child.getTopOverlap();
-					}
-                    else
-	                    data.ly[i] = childShiftY - childContentShift - childCloudHeigth / 2 - getSpaceAround();
-					if (childHeight != 0)
-	                    visibleChildFound = true;
-				}
-				else {
-					final int itemLevel = level - 1;
-					final GroupMargins groupMargins = groups[itemLevel];
-					if (child.isFirstGroupNode()) {
-						groups[level].start = groupMargins.start;
-					}
-					int summaryY = (groupMargins.startY + groupMargins.endY) / 2 - childContentHeight / 2
-					        + childShiftY - (child.getContent().getY() - childCloudHeigth / 2 - getSpaceAround());
-					data.ly[i] = summaryY;
-					if (!child.isFree()) {
-						final int deltaY = summaryY - groupMargins.startY + child.getTopOverlap();
-						if (deltaY < 0) {
-							y -= deltaY;
-							summaryY -= deltaY;
-							for (int j = groupMargins.start; j <= i; j++) {
-								NodeView groupItem = (NodeView) getView().getComponent(j);
-								if (groupItem.isLeft() == isLeft && (data.summary[j] || !data.free[j]))
-									data.ly[j] -= deltaY;
-							}
-						}
-						if (childHeight != 0) {
-							summaryY += childHeight + getVGap() - child.getBottomOverlap();
-						}
-						y = Math.max(y, summaryY);
-						if (deltaY < 0)
-							top += deltaY;
-					}
-				}
-				if(! isItem || ! child.isFree()){
-					if(child.isFirstGroupNode())
-	                    groups[level].set(data.ly[i] + child.getTopOverlap(), data.ly[i] + childHeight - child.getBottomOverlap());
-                    else
-	                    groups[level].extend(data.ly[i] + child.getTopOverlap(), data.ly[i] + childHeight - child.getBottomOverlap());
-				}
-			}
+		int top = 0;
+		int y = 0;
+		boolean visibleChildFound = false;
+		final GroupMargins[] groups = GroupMargins.create(highestSummaryLevel);
+		int levelIndex = 1;
+		for (int i : childrenOnSide) {
+			final NodeView child = (NodeView) getView().getComponent(i);
+			int level = levels[levelIndex];
+			final int oldLevel = levels[levelIndex - 1];
+			final ChildPositionCalculator childPositionCalculator = ChildPositionCalculator.create(spaceAround, vGap, child, oldLevel, level);
+			childPositionCalculator.calcChildY(y, visibleChildFound, calculateOnLeftSide, data, levels, groups, i);
+			top += childPositionCalculator.getTopChange();
+			y = childPositionCalculator.getY();
+			visibleChildFound = childPositionCalculator.isVisibleChildFound();
+			levelIndex++;
 		}
-	    return top;
+		return top;
     }
 
 	private void setChildrenFreeProperty(final LayoutData data, List<Integer> childrenOnSide) {

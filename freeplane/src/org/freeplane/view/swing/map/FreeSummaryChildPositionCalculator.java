@@ -19,43 +19,19 @@
  */
 package org.freeplane.view.swing.map;
 
+import org.freeplane.view.swing.map.NodeViewLayoutAdapter.LayoutData;
+
 /**
  * @author Dimitry Polivaev
- * 07.10.2013
+ * 12.10.2013
  */
-class GroupMargins{
-	public int start;
-	public int startY;
-	public int endY;
-
-	static GroupMargins[] create(int size){
-		GroupMargins[] groups = new GroupMargins[size];
-		for(int i = 0; i < size; i++)
-			groups[i] = new GroupMargins();
-		return groups;
-	}
-
-	public void beginFrom(int start) {
-	    this.start = start;
-	    startY = Integer.MAX_VALUE;
-	    endY = Integer.MIN_VALUE;
+public class FreeSummaryChildPositionCalculator extends SummaryChildPositionCalculator{
+	public FreeSummaryChildPositionCalculator(int spaceAround, int vGap, NodeView child, int oldLevel, int level) {
+        super(spaceAround, vGap, child, oldLevel, level);
     }
+	@Override
+    protected void changeGroupedItemYPositions(final boolean calculateOnLeftSide, final LayoutData data, int i,
+	                                             final GroupMargins groupMargins, int summaryY){
 
-	public void extend(int startY, int endY){
-		this.startY = Math.min(this.startY, startY);
-		this.endY = Math.max(this.endY, endY);
 	}
-
-	public void set(int startY, int endY){
-		this.startY = startY;
-		this.endY = endY;
-	}
-
-	public void setMargins(boolean firstGroupNode, int startY, int endY){
-		if(firstGroupNode)
-	    	set(startY, endY);
-	    else
-	    	extend(startY, endY);
-	}
-
 }
