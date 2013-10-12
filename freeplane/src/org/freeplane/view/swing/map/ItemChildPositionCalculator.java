@@ -67,5 +67,24 @@ public class ItemChildPositionCalculator extends ChildPositionCalculator{
     	setGroupMargins(data, groups, i);
     }
 
+	protected void calcItemChildContentHeightSum(final int[] groupStartContentHeightSum) {
+	    childContentHeightSum += childContentHeight;
+	    final boolean followsSummary = oldLevel > 0;
+	    if (followsSummary)
+	        for (int j = 0; j < oldLevel; j++)
+	    		groupStartContentHeightSum[j] = childContentHeightSum;
+	    else if (child.isFirstGroupNode()) {
+	    	groupStartContentHeightSum[0] = childContentHeightSum;
+	    }
+	    if (childHeight != 0 && visibleChildFound)
+	        childContentHeightSum += getVGap();
+	    if (childHeight != 0)
+	        visibleChildFound = true;
+    }
 
+	@Override
+    public void chilContentHeightSum(final int[] levels, final int[] groupStartContentHeightSum, int i, boolean pVisibleChildFound, int childContentHeightSumBefore) {
+		initContentHeightSum(pVisibleChildFound, childContentHeightSumBefore);
+		this.calcItemChildContentHeightSum(groupStartContentHeightSum);
+    }
 }

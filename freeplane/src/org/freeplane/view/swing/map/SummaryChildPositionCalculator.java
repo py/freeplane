@@ -69,6 +69,24 @@ public class SummaryChildPositionCalculator extends ChildPositionCalculator{
 		    y = Math.max(y, summaryY);
 		    if (deltaY < 0)
 		    	top += deltaY;
+	}
+
+	protected void calculateSummaryChildContentHeightSum(final int[] groupStartContentHeightSum) {
+	    final int itemLevel = level - 1;
+	    if (child.isFirstGroupNode())
+	        groupStartContentHeightSum[level] = groupStartContentHeightSum[itemLevel];
+	    if (!child.isFree()) {
+	    	final int summaryContentHeight = groupStartContentHeightSum[itemLevel] + childContentHeight;
+	    	if (childContentHeightSum < summaryContentHeight) {
+	    		childContentHeightSum = summaryContentHeight;
+	    	}
 	    }
+    }
+
+	@Override
+    public void chilContentHeightSum(final int[] levels, final int[] groupStartContentHeightSum, int i, boolean pVisibleChildFound, int childContentHeightSumBefore) {
+		initContentHeightSum(pVisibleChildFound, childContentHeightSumBefore);
+	    calculateSummaryChildContentHeightSum(groupStartContentHeightSum);
+    }
 
 }

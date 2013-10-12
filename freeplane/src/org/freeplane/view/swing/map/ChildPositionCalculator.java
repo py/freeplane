@@ -28,7 +28,7 @@ import org.freeplane.view.swing.map.cloud.CloudView;
  * 12.10.2013
  */
 abstract class ChildPositionCalculator{
-	public static ChildPositionCalculator create(int spaceAround, int vGap, NodeView child, int oldLevel, int level) {
+	public static ChildPositionCalculator create(NodeView child, int spaceAround, int vGap, int oldLevel, int level) {
 	    if (level == 0) {
 	    	if (child.isFree())
 	            return new FreeItemChildPositionCalculator(spaceAround, vGap, child, oldLevel, level);
@@ -69,6 +69,7 @@ abstract class ChildPositionCalculator{
 
 	protected int y;
 	protected boolean visibleChildFound;
+	protected int childContentHeightSum;
 
 
 	public ChildPositionCalculator(int spaceAround, int vGap, NodeView child, int oldLevel, int level) {
@@ -98,9 +99,9 @@ abstract class ChildPositionCalculator{
 		}
 	}
 
-	public void calcChildY(int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups, int i) {
+	public void calcChildY(int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups, int i){
 		initY(yBefore, visibleChildAlreadyFound, data, i);
-    }
+	}
 
 	protected void initY(int yBefore, boolean visibleChildAlreadyFound, final LayoutData data, int i) {
 	    this.top = 0;
@@ -119,5 +120,18 @@ abstract class ChildPositionCalculator{
 
 	protected int getSpaceAround() {
 	    return spaceAround;
+    }
+
+	public void chilContentHeightSum(final int[] levels, final int[] groupStartContentHeightSum, int i, boolean pVisibleChildFound, int childContentHeightSumBefore) {
+		initContentHeightSum(pVisibleChildFound, childContentHeightSumBefore);
+    }
+
+	protected void initContentHeightSum(boolean pVisibleChildFound, int childContentHeightSumBefore) {
+	    this.visibleChildFound = pVisibleChildFound;
+		childContentHeightSum = childContentHeightSumBefore;
+    }
+
+	public int getChildContentHeightSum() {
+	    return childContentHeightSum;
     }
 }
