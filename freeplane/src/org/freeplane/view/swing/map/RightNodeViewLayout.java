@@ -33,6 +33,6 @@ public class RightNodeViewLayout extends NodeViewLayoutAdapter {
 	protected void layout() {
 		final LayoutData layoutData = new LayoutData(getChildCount());
 		calcLayout(false, layoutData);
-		placeChildren(layoutData);
+		setChildLocationsAndOwnSize(layoutData);
 	}
 }

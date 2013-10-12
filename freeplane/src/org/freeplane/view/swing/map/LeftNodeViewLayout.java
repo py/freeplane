@@ -36,7 +36,7 @@ public class LeftNodeViewLayout extends NodeViewLayoutAdapter {
 	protected void layout() {
 		final LayoutData layoutData = new LayoutData(getChildCount());
 		calcLayout(true, layoutData);
-		placeChildren(layoutData);
+		setChildLocationsAndOwnSize(layoutData);
 	}
 
 }

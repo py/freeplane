@@ -282,10 +282,10 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 		int levelIndex = 1;
 		for (int childIndex : childrenOnSide) {
 			final NodeView child = (NodeView) getView().getComponent(childIndex);
-			data.free[childIndex] = child.isFree();
 			int level = levels[levelIndex];
 			final int oldLevel = levels[levelIndex - 1];
 			data.summary[childIndex] = level > 0;
+			data.free[childIndex] = child.isFree();
 			final ChildPositionCalculator childPositionCalculator = ChildPositionCalculator.create(child, spaceAround, vGap, oldLevel, level);
 			childPositionCalculator.calcChildY(childIndex, y, visibleChildFound, calculateOnLeftSide, data, levels, groups);
 			top += childPositionCalculator.getTopChange();
@@ -341,7 +341,7 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 
 	private void setData(final LayoutData data, boolean isLeft, int left, int childContentHeight, int top) {
 		if (!isLeft && data.leftDataSet || isLeft && data.rightDataSet) {
-			extendData(data, isLeft, left, childContentHeight, top);
+			setOtherSideData(data, isLeft, left, childContentHeight, top);
 		}
 		else {
 			data.left = left;
@@ -354,7 +354,7 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 			data.rightDataSet = true;
 	}
 
-	private void extendData(final LayoutData data, boolean isLeft, int left, int childContentHeight, int top) {
+	private void setOtherSideData(final LayoutData data, boolean isLeft, int left, int childContentHeight, int top) {
 	    data.left = Math.min(data.left, left);
 	    data.childContentHeight = Math.max(data.childContentHeight, childContentHeight);
 	    int deltaTop = top - data.top;
@@ -375,52 +375,65 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 	    }
     }
 
-	protected void placeChildren(final LayoutData data) {
+	protected void setChildLocationsAndOwnSize(final LayoutData data) {
+		setContentVisibility();
 		final int contentX = Math.max(getSpaceAround(), -data.left);
 		int contentY = getSpaceAround() + cloudHeight / 2 - Math.min(0, data.top);
-		if (getView().isContentVisible()) {
-			getContent().setVisible(true);
-		}
-		else {
-			getContent().setVisible(false);
-		}
 		int baseY = contentY - getSpaceAround() + data.top;
-		int minY = 0;
-		for (int i = 0; i < getChildCount(); i++) {
-			if (!data.summary[i] && data.free[i]) {
-				minY = Math.min(minY, contentY + data.ly[i]);
-			}
-			else
-				minY = Math.min(minY, baseY + data.ly[i]);
-		}
+		int minY = findMinimumY(data, contentY, baseY);
 		if (minY < 0) {
 			contentY -= minY;
 			baseY -= minY;
 		}
-		int width = contentX + contentWidth + getSpaceAround();
-		int height = contentY + contentHeight + cloudHeight / 2 + getSpaceAround();
 		getContent().setBounds(contentX, contentY, contentWidth, contentHeight);
-		int topOverlap = -minY;
-		int heigthWithoutOverlap = height;
-		for (int i = 0; i < getChildCount(); i++) {
+		setChildLocations(contentX, contentY, data, baseY);
+		setOwnSizeAndOverlap(data, contentX, contentY, -minY);
+	}
+
+	private void setChildLocations(final int contentX, int contentY, final LayoutData data, int baseY) {
+	    for (int i = 0; i < getChildCount(); i++) {
 			NodeView child = (NodeView) getView().getComponent(i);
 			final int y;
-			if (!data.summary[i] && data.free[i]) {
-				y = contentY + data.ly[i];
-			}
-			else {
+			if (!data.summary[i] && data.free[i])
+	            y = contentY + data.ly[i];
+            else {
 				y = baseY + data.ly[i];
-				if (!data.free[i])
-					heigthWithoutOverlap = Math.max(heigthWithoutOverlap, y + child.getHeight() + cloudHeight / 2
-					        - child.getBottomOverlap());
 			}
 			final int x = contentX + data.lx[i];
 			child.setLocation(x, y);
+		}
+    }
+
+	private void setOwnSizeAndOverlap(final LayoutData data, final int contentX, int contentY, int topOverlap) {
+	    int width = contentX + contentWidth + getSpaceAround();
+		int height = contentY + contentHeight + cloudHeight / 2 + getSpaceAround();
+		int heigthWithoutOverlap = height;
+		for (int i = 0; i < getChildCount(); i++) {
+			NodeView child = (NodeView) getView().getComponent(i);
+			final int y = child.getY();
+			if (!data.free[i])
+				heigthWithoutOverlap = Math.max(heigthWithoutOverlap, y + child.getHeight() + cloudHeight / 2
+					- child.getBottomOverlap());
 			width = Math.max(width, child.getX() + child.getWidth());
 			height = Math.max(height, y + child.getHeight() + cloudHeight / 2);
 		}
 		view.setSize(width, height);
 		view.setTopOverlap(topOverlap);
 		view.setBottomOverlap(height - heigthWithoutOverlap);
-	}
+    }
+
+	private int findMinimumY(final LayoutData data, int contentY, int baseY) {
+	    int minY = 0;
+		for (int i = 0; i < getChildCount(); i++) {
+			minY = Math.min(minY, (!data.summary[i] && data.free[i] ? contentY : baseY) + data.ly[i]);
+		}
+	    return minY;
+    }
+
+	private void setContentVisibility() {
+	    if (getView().isContentVisible())
+	        getContent().setVisible(true);
+        else
+	        getContent().setVisible(false);
+    }
 }

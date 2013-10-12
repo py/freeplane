@@ -37,6 +37,6 @@ public class VerticalRootNodeViewLayout extends NodeViewLayoutAdapter {
 		final LayoutData layoutData = new LayoutData(getChildCount());
 		calcLayout(true, layoutData);
 		calcLayout(false, layoutData);
-		placeChildren(layoutData);
+		setChildLocationsAndOwnSize(layoutData);
 	}
 }
