@@ -43,8 +43,7 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 		int left;
 		int childContentHeight;
 		int top;
-		boolean rightDataSet;
-		boolean leftDataSet;
+		boolean firstDataSet;
 
 		public LayoutData(int childCount) {
 			super();
@@ -55,8 +54,7 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 			this.left = 0;
 			this.childContentHeight = 0;
 			this.top = 0;
-			rightDataSet = false;
-			leftDataSet = false;
+			firstDataSet = false;
 		}
 	}
 
@@ -340,19 +338,18 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
     }
 
 	private void setData(final LayoutData data, boolean isLeft, int left, int childContentHeight, int top) {
-		if (!isLeft && data.leftDataSet || isLeft && data.rightDataSet) {
-			setOtherSideData(data, isLeft, left, childContentHeight, top);
-		}
-		else {
-			data.left = left;
-			data.childContentHeight = childContentHeight;
-			data.top = top;
-		}
-		if (isLeft)
-			data.leftDataSet = true;
-		else
-			data.rightDataSet = true;
+		if (!data.firstDataSet)
+	        setOneSideData(data, left, childContentHeight, top);
+        else
+	        setOtherSideData(data, isLeft, left, childContentHeight, top);
 	}
+
+	private void setOneSideData(final LayoutData data, int left, int childContentHeight, int top) {
+	    data.left = left;
+	    data.childContentHeight = childContentHeight;
+	    data.top = top;
+		data.firstDataSet = true;
+    }
 
 	private void setOtherSideData(final LayoutData data, boolean isLeft, int left, int childContentHeight, int top) {
 	    data.left = Math.min(data.left, left);
@@ -393,13 +390,8 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 	private void setChildLocations(final int contentX, int contentY, final LayoutData data, int baseY) {
 	    for (int i = 0; i < getChildCount(); i++) {
 			NodeView child = (NodeView) getView().getComponent(i);
-			final int y;
-			if (!data.summary[i] && data.free[i])
-	            y = contentY + data.ly[i];
-            else {
-				y = baseY + data.ly[i];
-			}
 			final int x = contentX + data.lx[i];
+			final int y = (!data.summary[i] && data.free[i] ? contentY : baseY) + data.ly[i];
 			child.setLocation(x, y);
 		}
     }
@@ -412,8 +404,8 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 			NodeView child = (NodeView) getView().getComponent(i);
 			final int y = child.getY();
 			if (!data.free[i])
-				heigthWithoutOverlap = Math.max(heigthWithoutOverlap, y + child.getHeight() + cloudHeight / 2
-					- child.getBottomOverlap());
+				heigthWithoutOverlap = Math.max(heigthWithoutOverlap,
+					y + child.getHeight() + cloudHeight / 2 - child.getBottomOverlap());
 			width = Math.max(width, child.getX() + child.getWidth());
 			height = Math.max(height, y + child.getHeight() + cloudHeight / 2);
 		}
