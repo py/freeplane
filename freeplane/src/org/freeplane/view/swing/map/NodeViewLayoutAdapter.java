@@ -31,7 +31,6 @@ import javax.swing.JComponent;
 import org.freeplane.features.cloud.CloudModel;
 import org.freeplane.features.map.NodeModel;
 import org.freeplane.features.mode.ModeController;
-import org.freeplane.features.nodelocation.LocationModel;
 import org.freeplane.features.nodestyle.NodeStyleController;
 import org.freeplane.view.swing.map.cloud.CloudView;
 
@@ -253,63 +252,23 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 		final GroupMargins[] groups = GroupMargins.create(highestSummaryLevel);
 		int levelIndex = 1;
 		final int[] groupStartContentHeightSum = new int[highestSummaryLevel];
+		final int summaryBaseX[] = new int[highestSummaryLevel];
 		for (int childIndex : childrenOnSide) {
 			final ChildPositionCalculator childPositionCalculator = childPositionCalculator(childIndex, levels, levelIndex);
 			childPositionCalculator.calcChildY(y, visibleChildFound, calculateOnLeftSide, data, levels, groups, childIndex);
 			top += childPositionCalculator.getTopChange();
 			y = childPositionCalculator.getY();
-			childPositionCalculator.chilContentHeightSum(levels, groupStartContentHeightSum, levelIndex, visibleChildFound, childContentHeightSum);
+			childPositionCalculator.chilContentHeightSum(groupStartContentHeightSum, visibleChildFound, childContentHeightSum);
 			childContentHeightSum = childPositionCalculator.getChildContentHeightSum();
-			visibleChildFound = childPositionCalculator.isVisibleChildFound();
+			childPositionCalculator.calcChildRelativeXPosition(data, summaryBaseX, childIndex, contentWidth);
+			visibleChildFound = visibleChildFound || childPositionCalculator.isChildVisible();
 			levelIndex++;
 		}
 		top += (contentHeight - childContentHeightSum) / 2;
-		calculateRelativeXPositions(childrenOnSide, highestSummaryLevel, levels, data);
 		int left = calculateLeft(childrenOnSide, data);
 		setData(data, calculateOnLeftSide, left, childContentHeightSum, top);
 	}
 
-	private void calculateRelativeXPositions(List<Integer> childrenOnSide, int highestSummaryLevel, final int[] levels,
-                                            final LayoutData data) {
-		int levelIndex = 1;
-		final int summaryBaseX[] = new int[highestSummaryLevel];
-		for (int i : childrenOnSide) {
-			final NodeView child = (NodeView) getView().getComponent(i);
-			int level = levels[levelIndex++];
-			final int x;
-			final int baseX;
-			final boolean isItem = level == 0;
-			if (isItem) {
-				if (!child.isFree()) {
-					final int oldLevel = levels[levelIndex - 2];
-					if (oldLevel > 0 || child.isFirstGroupNode())
-						summaryBaseX[0] = 0;
-				}
-				baseX = child.isLeft() != child.isFree() ? 0 : contentWidth;
-			}
-			else {
-				if (child.isFirstGroupNode())
-					summaryBaseX[level] = 0;
-				baseX = summaryBaseX[level - 1];
-			}
-			final int childHGap;
-			if (child.isContentVisible())
-				childHGap = child.getHGap();
-			else if (child.isSummary())
-				childHGap = child.getZoomed(LocationModel.HGAP);
-			else
-				childHGap = 0;
-			if (child.isLeft()) {
-				x = baseX - childHGap - child.getContent().getX() - child.getContent().getWidth();
-				summaryBaseX[level] = Math.min(summaryBaseX[level], x + getSpaceAround());
-			}
-			else {
-				x = baseX + childHGap - child.getContent().getX();
-				summaryBaseX[level] = Math.max(summaryBaseX[level], x + child.getWidth() - getSpaceAround());
-			}
-			data.lx[i] = x;
-		}
-    }
 
 	private int calculateLeft(List<Integer> childrenOnSide, final LayoutData data) {
 	    int left = 0;

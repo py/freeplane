@@ -36,8 +36,6 @@ public class FreeItemChildPositionCalculator extends ChildPositionCalculator{
 	}
 	protected void calcFreeItemY(final LayoutData data, int i) {
 	    data.ly[i] = childShiftY - childContentShift - childCloudHeigth / 2 - getSpaceAround();
-    	if (childHeight != 0)
-            visibleChildFound = true;
     }
 
 }

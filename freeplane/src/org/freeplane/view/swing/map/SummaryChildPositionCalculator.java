@@ -84,8 +84,8 @@ public class SummaryChildPositionCalculator extends ChildPositionCalculator{
     }
 
 	@Override
-    public void chilContentHeightSum(final int[] levels, final int[] groupStartContentHeightSum, int i, boolean pVisibleChildFound, int childContentHeightSumBefore) {
-		initContentHeightSum(pVisibleChildFound, childContentHeightSumBefore);
+    public void chilContentHeightSum(final int[] groupStartContentHeightSum, boolean pVisibleChildFound, int childContentHeightSumBefore) {
+		childContentHeightSum = childContentHeightSumBefore;
 	    calculateSummaryChildContentHeightSum(groupStartContentHeightSum);
     }
 

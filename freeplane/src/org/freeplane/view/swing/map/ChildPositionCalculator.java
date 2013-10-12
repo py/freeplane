@@ -20,6 +20,7 @@
 package org.freeplane.view.swing.map;
 
 import org.freeplane.features.cloud.CloudModel;
+import org.freeplane.features.nodelocation.LocationModel;
 import org.freeplane.view.swing.map.NodeViewLayoutAdapter.LayoutData;
 import org.freeplane.view.swing.map.cloud.CloudView;
 
@@ -28,22 +29,22 @@ import org.freeplane.view.swing.map.cloud.CloudView;
  * 12.10.2013
  */
 abstract class ChildPositionCalculator{
-	public static ChildPositionCalculator create(NodeView child, int spaceAround, int vGap, int oldLevel, int level) {
+	public static ChildPositionCalculator create(NodeView child, int spaceAround, int vGap, int previousChildLevel, int level) {
 	    if (level == 0) {
 	    	if (child.isFree())
-	            return new FreeItemChildPositionCalculator(spaceAround, vGap, child, oldLevel, level);
+	            return new FreeItemChildPositionCalculator(spaceAround, vGap, child, previousChildLevel, level);
             else
-	            return new ItemChildPositionCalculator(spaceAround, vGap, child, oldLevel, level);
+	            return new ItemChildPositionCalculator(spaceAround, vGap, child, previousChildLevel, level);
 	    }
         else
         	if (child.isFree())
-        		return new FreeSummaryChildPositionCalculator(spaceAround, vGap, child, oldLevel, level);
+        		return new FreeSummaryChildPositionCalculator(spaceAround, vGap, child, previousChildLevel, level);
         	else
-        		return new SummaryChildPositionCalculator(spaceAround, vGap, child, oldLevel, level);
+        		return new SummaryChildPositionCalculator(spaceAround, vGap, child, previousChildLevel, level);
     }
 
 	protected final NodeView child;
-	protected final int oldLevel;
+	protected final int previousChildLevel;
 	protected final int level;
 	protected final int vGap;
 	protected final int spaceAround;
@@ -63,20 +64,15 @@ abstract class ChildPositionCalculator{
 		return y;
 	}
 
-	public boolean isVisibleChildFound() {
-		return visibleChildFound;
-	}
-
 	protected int y;
-	protected boolean visibleChildFound;
 	protected int childContentHeightSum;
 
 
-	public ChildPositionCalculator(int spaceAround, int vGap, NodeView child, int oldLevel, int level) {
+	public ChildPositionCalculator(int spaceAround, int vGap, NodeView child, int previousChildLevel, int level) {
 		this.vGap = vGap;
 		this.spaceAround = spaceAround;
 		this.child = child;
-		this.oldLevel = oldLevel;
+		this.previousChildLevel = previousChildLevel;
 		this.level = level;
 		childHeight = child.getHeight() - 2 * spaceAround;
 		childCloudHeigth = getAdditionalCloudHeigth();
@@ -106,7 +102,6 @@ abstract class ChildPositionCalculator{
 	protected void initY(int yBefore, boolean visibleChildAlreadyFound, final LayoutData data, int i) {
 	    this.top = 0;
 		this.y = yBefore;
-		this.visibleChildFound = visibleChildAlreadyFound;
 	    data.summary[i] = !isItem;
     }
 
@@ -122,16 +117,49 @@ abstract class ChildPositionCalculator{
 	    return spaceAround;
     }
 
-	public void chilContentHeightSum(final int[] levels, final int[] groupStartContentHeightSum, int i, boolean pVisibleChildFound, int childContentHeightSumBefore) {
-		initContentHeightSum(pVisibleChildFound, childContentHeightSumBefore);
-    }
-
-	protected void initContentHeightSum(boolean pVisibleChildFound, int childContentHeightSumBefore) {
-	    this.visibleChildFound = pVisibleChildFound;
+	public void chilContentHeightSum(final int[] groupStartContentHeightSum, boolean pVisibleChildFound, int childContentHeightSumBefore) {
 		childContentHeightSum = childContentHeightSumBefore;
     }
 
 	public int getChildContentHeightSum() {
 	    return childContentHeightSum;
     }
+
+	public void calcChildRelativeXPosition(final LayoutData data, final int[] summaryBaseX, int childIndex, int childContentWidth) {
+	    final int x;
+	    final int baseX;
+	    final boolean isItem = level == 0;
+	    if (isItem) {
+	    	if (!child.isFree()) {
+	    		if (previousChildLevel > 0 || child.isFirstGroupNode())
+	    			summaryBaseX[0] = 0;
+	    	}
+	    	baseX = child.isLeft() != child.isFree() ? 0 : childContentWidth;
+	    }
+	    else {
+	    	if (child.isFirstGroupNode())
+	    		summaryBaseX[level] = 0;
+	    	baseX = summaryBaseX[level - 1];
+	    }
+	    final int childHGap;
+	    if (child.isContentVisible())
+	    	childHGap = child.getHGap();
+	    else if (child.isSummary())
+	    	childHGap = child.getZoomed(LocationModel.HGAP);
+	    else
+	    	childHGap = 0;
+	    if (child.isLeft()) {
+	    	x = baseX - childHGap - child.getContent().getX() - child.getContent().getWidth();
+	    	summaryBaseX[level] = Math.min(summaryBaseX[level], x + getSpaceAround());
+	    }
+	    else {
+	    	x = baseX + childHGap - child.getContent().getX();
+	    	summaryBaseX[level] = Math.max(summaryBaseX[level], x + child.getWidth() - getSpaceAround());
+	    }
+	    data.lx[childIndex] = x;
+    }
+
+	public boolean isChildVisible() {
+		return childHeight != 0;
+	}
 }
