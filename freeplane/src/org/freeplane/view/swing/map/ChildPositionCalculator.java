@@ -95,14 +95,13 @@ abstract class ChildPositionCalculator{
 		}
 	}
 
-	public void calcChildY(int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups, int i){
-		initY(yBefore, visibleChildAlreadyFound, data, i);
+	public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups){
+		initY(yBefore, visibleChildAlreadyFound, data, childIndex);
 	}
 
 	protected void initY(int yBefore, boolean visibleChildAlreadyFound, final LayoutData data, int i) {
 	    this.top = 0;
 		this.y = yBefore;
-	    data.summary[i] = !isItem;
     }
 
 	protected void setGroupMargins(final LayoutData data, final GroupMargins[] groups, int i) {
@@ -125,29 +124,11 @@ abstract class ChildPositionCalculator{
 	    return childContentHeightSum;
     }
 
-	public void calcChildRelativeXPosition(final LayoutData data, final int[] summaryBaseX, int childIndex, int childContentWidth) {
+	public void calcChildRelativeXPosition(final LayoutData data, final int[] summaryBaseX, int childIndex, int parentContentWidth) {
 	    final int x;
 	    final int baseX;
-	    final boolean isItem = level == 0;
-	    if (isItem) {
-	    	if (!child.isFree()) {
-	    		if (previousChildLevel > 0 || child.isFirstGroupNode())
-	    			summaryBaseX[0] = 0;
-	    	}
-	    	baseX = child.isLeft() != child.isFree() ? 0 : childContentWidth;
-	    }
-	    else {
-	    	if (child.isFirstGroupNode())
-	    		summaryBaseX[level] = 0;
-	    	baseX = summaryBaseX[level - 1];
-	    }
-	    final int childHGap;
-	    if (child.isContentVisible())
-	    	childHGap = child.getHGap();
-	    else if (child.isSummary())
-	    	childHGap = child.getZoomed(LocationModel.HGAP);
-	    else
-	    	childHGap = 0;
+	    baseX = calcBaseX(summaryBaseX, parentContentWidth);
+	    final int childHGap = calcHGap();
 	    if (child.isLeft()) {
 	    	x = baseX - childHGap - child.getContent().getX() - child.getContent().getWidth();
 	    	summaryBaseX[level] = Math.min(summaryBaseX[level], x + getSpaceAround());
@@ -157,6 +138,34 @@ abstract class ChildPositionCalculator{
 	    	summaryBaseX[level] = Math.max(summaryBaseX[level], x + child.getWidth() - getSpaceAround());
 	    }
 	    data.lx[childIndex] = x;
+    }
+
+	private int calcHGap() {
+	    final int childHGap;
+	    if (child.isContentVisible())
+	    	childHGap = child.getHGap();
+	    else if (child.isSummary())
+	    	childHGap = child.getZoomed(LocationModel.HGAP);
+	    else
+	    	childHGap = 0;
+	    return childHGap;
+    }
+
+	private int calcBaseX(final int[] summaryBaseX, int parentContentWidth) {
+	    final int baseX;
+	    if (isItem) {
+	    	if (!child.isFree()) {
+	    		if (previousChildLevel > 0 || child.isFirstGroupNode())
+	    			summaryBaseX[0] = 0;
+	    	}
+	    	baseX = child.isLeft() != child.isFree() ? 0 : parentContentWidth;
+	    }
+	    else {
+	    	if (child.isFirstGroupNode())
+	    		summaryBaseX[level] = 0;
+	    	baseX = summaryBaseX[level - 1];
+	    }
+	    return baseX;
     }
 
 	public boolean isChildVisible() {

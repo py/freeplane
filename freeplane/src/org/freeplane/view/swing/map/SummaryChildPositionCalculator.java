@@ -30,9 +30,9 @@ public class SummaryChildPositionCalculator extends ChildPositionCalculator{
         super(spaceAround, vGap, child, oldLevel, level);
     }
 	@Override
-    public void calcChildY(int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups, int i) {
-		initY(yBefore, visibleChildAlreadyFound, data, i);
-        calcSummaryY(calculateOnLeftSide, data, groups, i);
+    public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups) {
+		initY(yBefore, visibleChildAlreadyFound, data, childIndex);
+        calcSummaryY(calculateOnLeftSide, data, groups, childIndex);
 
 	}
 

@@ -31,9 +31,9 @@ public class ItemChildPositionCalculator extends ChildPositionCalculator{
     }
 
 	@Override
-    public void calcChildY(int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups, int i) {
-		initY(yBefore, visibleChildAlreadyFound, data, i);
-		this.calcItemY(data, groups, i, visibleChildAlreadyFound);
+    public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups) {
+		initY(yBefore, visibleChildAlreadyFound, data, childIndex);
+		this.calcItemY(data, groups, childIndex, visibleChildAlreadyFound);
 	}
 
 	public void calcItemY(final LayoutData data, final GroupMargins[] groups, int i, final boolean visibleChildFound) {
