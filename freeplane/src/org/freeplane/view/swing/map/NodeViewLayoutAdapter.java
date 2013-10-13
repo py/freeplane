@@ -239,26 +239,25 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 	private int[] levels(List<Integer> childrenOnSide, int highestSummaryLevel) {
 	    final int[] levels = new int[childrenOnSide.size() + 1];
 		{
-			boolean useSummaryAsItem = true;
+			boolean useNextSummaryAsItem = true;
 			int level = levels[0] = highestSummaryLevel;
 			int levelIndex = 1;
 			for (int i : childrenOnSide) {
 				final NodeView child = (NodeView) getView().getComponent(i);
-				final boolean isSummary = child.isSummary();
-				final boolean isItem = !isSummary || useSummaryAsItem;
-				final int childHeight = child.getHeight() - 2 * getSpaceAround();
-				if (isItem) {
-					if (childHeight != 0)
-						useSummaryAsItem = false;
-					else if (level > 0)
-						useSummaryAsItem = true;
-					level = 0;
-				}
-				else {
-					level++;
-				}
+				final boolean isItem = !child.isSummary() || useNextSummaryAsItem;
+				if (isItem)
+	                level = 0;
+                else
+	                level++;
 				levels[levelIndex] = level;
 				levelIndex++;
+				if (isItem) {
+					final int childHeight = child.getHeight() - 2 * getSpaceAround();
+					if (childHeight != 0)
+						useNextSummaryAsItem = false;
+					else if (level > 0)
+						useNextSummaryAsItem = true;
+				}
 			}
 		}
 	    return levels;
