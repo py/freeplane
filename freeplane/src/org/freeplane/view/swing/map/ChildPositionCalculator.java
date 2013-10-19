@@ -21,7 +21,6 @@ package org.freeplane.view.swing.map;
 
 import org.freeplane.features.cloud.CloudModel;
 import org.freeplane.features.nodelocation.LocationModel;
-import org.freeplane.view.swing.map.NodeViewLayoutAdapter.LayoutData;
 import org.freeplane.view.swing.map.cloud.CloudView;
 
 /**

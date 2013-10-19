@@ -19,7 +19,6 @@
  */
 package org.freeplane.view.swing.map;
 
-import org.freeplane.view.swing.map.NodeViewLayoutAdapter.LayoutData;
 
 /**
  * @author Dimitry Polivaev
