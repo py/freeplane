@@ -33,7 +33,6 @@ public class ItemChildPositionCalculator extends ChildPositionCalculator{
     public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups) {
 		topChange = 0;
 		this.childBeginY = yBefore;
-		updateGroupStart(childIndex, groups);
 		if (childShiftY < 0 || !visibleChildAlreadyFound)
 		    topChange += childShiftY;
 		childBeginY -= child.getTopOverlap();

@@ -193,13 +193,4 @@ abstract class ChildPositionCalculator{
 	public boolean isChildVisible() {
 		return childHeight != 0;
 	}
-
-	protected void updateGroupStart(int childIndex, final GroupMargins[] groups) {
-	    final boolean followsSummary = this.previousChildLevel > 0;
-		if (followsSummary)
-		    for (int j = 0; j < this.previousChildLevel; j++)
-				groups[j].beginFrom(childIndex);
-		else if (this.child.isFirstGroupNode())
-			groups[level].beginFrom(childIndex);
-	}
 }

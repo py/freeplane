@@ -261,12 +261,11 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 			data.summary[childIndex] = level > 0;
 			data.free[childIndex] = child.isFree();
 			final ChildPositionCalculator childPositionCalculator = ChildPositionCalculator.create(child, spaceAround, vGap, oldLevel, level);
+			updateGroupStart(groups, childIndex, child, oldLevel, level);
 			childPositionCalculator.calcChildY(childIndex, y, visibleChildFound, calculateOnLeftSide, data, levels, groups);
-			if(! child.isFree())
-	            groups[childPositionCalculator.level].setMargins(child.isFirstGroupNode(), childPositionCalculator.getGroupBegin(), childPositionCalculator.getGroupEnd());
+	        groups[childPositionCalculator.level].setMargins(child.isFirstGroupNode(), childPositionCalculator.getGroupBegin(), childPositionCalculator.getGroupEnd());
 			top += childPositionCalculator.getTopChange();
-			if(! child.isFree())
-				y = childPositionCalculator.getChildEndY();
+			y = childPositionCalculator.getChildEndY();
 			childPositionCalculator.chilContentHeightSum(groupStartContentHeightSum, visibleChildFound, childContentHeightSum);
 			childContentHeightSum = childPositionCalculator.getChildContentHeightSum();
 			childPositionCalculator.calcChildRelativeXPosition(data, summaryBaseX, childIndex, contentWidth);
@@ -277,6 +276,20 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 		int left = calculateLeft(childrenOnSide, data);
 		setData(data, calculateOnLeftSide, left, childContentHeightSum, top);
 	}
+
+	private void updateGroupStart(final GroupMargins[] groups, int childIndex, NodeView child, int previousChildLevel, int level) {
+	    final boolean followsSummary = previousChildLevel > 0;
+		final boolean isItem = level == 0;
+		if (followsSummary && isItem)
+		    for (int j = 0; j < previousChildLevel; j++)
+				groups[j].beginFrom(childIndex);
+		else if (child.isFirstGroupNode()){
+			if(isItem)
+				groups[level].beginFrom(childIndex);
+			else
+				groups[level].beginFrom(groups[level - 1].start);
+		}
+    }
 
 
 	private int calculateLeft(List<Integer> childrenOnSide, final LayoutData data) {

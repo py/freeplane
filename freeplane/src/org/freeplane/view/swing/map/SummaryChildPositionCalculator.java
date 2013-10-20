@@ -30,10 +30,7 @@ public class SummaryChildPositionCalculator extends ChildPositionCalculator{
     }
 	@Override
     public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups) {
-        final GroupMargins groupMargins = groups[level - 1];
-		if (child.isFirstGroupNode()) {
-			groups[level].beginFrom(groupMargins.start);
-		}
+		final GroupMargins groupMargins = groups[level - 1];
 		int summaryY = (groupMargins.startY + groupMargins.endY) / 2 - childContentHeight / 2
 		        + childShiftY - (child.getContent().getY() - childCloudHeigth / 2 - getSpaceAround());
 		childBeginY = summaryY;
