@@ -246,7 +246,7 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 			return;
 		int childContentHeightSum = 0;
 		int top = 0;
-		int y = 0;
+		int nextAvailableY = 0;
 		boolean visibleChildFound = false;
 		final int highestSummaryLevel = highestSummaryLevel(childrenOnSide);
 		final GroupMargins[] groups = GroupMargins.create(highestSummaryLevel);
@@ -260,15 +260,29 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 			final int oldLevel = levels[levelIndex - 1];
 			data.summary[childIndex] = level > 0;
 			data.free[childIndex] = child.isFree();
-			final ChildPositionCalculator childPositionCalculator = ChildPositionCalculator.create(child, spaceAround, vGap, oldLevel, level);
 			updateGroupStart(groups, childIndex, child, oldLevel, level);
-			childPositionCalculator.calcChildY(childIndex, y, visibleChildFound, calculateOnLeftSide, data, levels, groups);
+			final ChildPositionCalculator childPositionCalculator = ChildPositionCalculator.create(child, spaceAround, vGap, oldLevel, level);
+			childPositionCalculator.calcChildY(childIndex, nextAvailableY, visibleChildFound, calculateOnLeftSide, levels, groups);
+			childPositionCalculator.calcChildContentHeightSum(groupStartContentHeightSum, visibleChildFound, childContentHeightSum);
+			childPositionCalculator.calcChildRelativeXPosition(summaryBaseX, childIndex, contentWidth);
+
+			data.ly[childIndex] = childPositionCalculator.getChildBeginY();
+			nextAvailableY = childPositionCalculator.getNextAvailableChildY();
 	        groups[childPositionCalculator.level].setMargins(child.isFirstGroupNode(), childPositionCalculator.getGroupBegin(), childPositionCalculator.getGroupEnd());
 			top += childPositionCalculator.getTopChange();
-			y = childPositionCalculator.getChildEndY();
-			childPositionCalculator.chilContentHeightSum(groupStartContentHeightSum, visibleChildFound, childContentHeightSum);
+
+			final int groupShiftRequiredBySummary = childPositionCalculator.groupedItemShiftRequiredBySummary;
+			if (groupShiftRequiredBySummary > 0) {
+				for (int j = groups[level-1].start; j <= childIndex; j++) {
+					NodeView groupItem = (NodeView) child.getParent().getComponent(j);
+					if (groupItem.isLeft() == calculateOnLeftSide && (data.summary[j] || !data.free[j]))
+						data.ly[j] += groupShiftRequiredBySummary;
+				}
+			}
+
 			childContentHeightSum = childPositionCalculator.getChildContentHeightSum();
-			childPositionCalculator.calcChildRelativeXPosition(data, summaryBaseX, childIndex, contentWidth);
+		    summaryBaseX[level] = childPositionCalculator.getSummaryBaseX();
+		    data.lx[childIndex] = childPositionCalculator.getChildX();
 			visibleChildFound = visibleChildFound || childPositionCalculator.isChildVisible();
 			levelIndex++;
 		}

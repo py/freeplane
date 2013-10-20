@@ -29,10 +29,8 @@ public class FreeItemChildPositionCalculator extends ChildPositionCalculator{
         super(spaceAround, vGap, child, oldLevel, level);
     }
 	@Override
-    public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups) {
-		this.childBeginY = yBefore;
+    public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final int[] levels, final GroupMargins[] groups) {
 		childBeginY = childShiftY - childContentShift - childCloudHeigth / 2 - getSpaceAround();
-		data.ly[childIndex] = childBeginY;
 		this.childEndY = yBefore;
 	}
 

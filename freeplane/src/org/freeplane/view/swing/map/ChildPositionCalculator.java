@@ -51,6 +51,12 @@ abstract class ChildPositionCalculator{
 	protected final int childContentShift;
 	protected final boolean isItem;
 	protected int topChange;
+	protected int childBeginY;
+	protected int childEndY;
+	protected int childContentHeightSum;
+	protected int groupedItemShiftRequiredBySummary;
+	private int summaryBaseX;
+	private int childX;
 
 	public int getChildHeight() {
 		return childHeight;
@@ -77,17 +83,25 @@ abstract class ChildPositionCalculator{
 		return topChange;
 	}
 
-	public int getChildEndY() {
+	public int getNextAvailableChildY() {
 		return childEndY;
 	}
+	public boolean isChildVisible() {
+		return childHeight != 0;
+	}
 
-	protected int childBeginY;
+	public int getSummaryBaseX() {
+	    return summaryBaseX;
+    }
+
+	public int getChildX() {
+	    return childX;
+    }
+
 	public int getChildBeginY() {
 		return childBeginY;
 	}
 
-	protected int childEndY;
-	protected int childContentHeightSum;
 
 
 	public ChildPositionCalculator(int spaceAround, int vGap, NodeView child, int previousChildLevel, int level) {
@@ -117,7 +131,7 @@ abstract class ChildPositionCalculator{
 		}
 	}
 
-	public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups){
+	public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final int[] levels, final GroupMargins[] groups){
 		childBeginY = yBefore;
 		childEndY = yBefore;
 	}
@@ -138,7 +152,7 @@ abstract class ChildPositionCalculator{
 	    return spaceAround;
     }
 
-	public void chilContentHeightSum(final int[] groupStartContentHeightSum, boolean pVisibleChildFound, int childContentHeightSumBefore) {
+	public void calcChildContentHeightSum(final int[] groupStartContentHeightSum, boolean pVisibleChildFound, int childContentHeightSumBefore) {
 		childContentHeightSum = childContentHeightSumBefore;
     }
 
@@ -146,20 +160,17 @@ abstract class ChildPositionCalculator{
 	    return childContentHeightSum;
     }
 
-	public void calcChildRelativeXPosition(final LayoutData data, final int[] summaryBaseX, int childIndex, int parentContentWidth) {
-	    final int x;
-	    final int baseX;
-	    baseX = calcBaseX(summaryBaseX, parentContentWidth);
+	public void calcChildRelativeXPosition(final int[] summaryBaseX, int childIndex, int parentContentWidth) {
+	    final int baseX = calcBaseX(summaryBaseX, parentContentWidth);
 	    final int childHGap = calcHGap();
 	    if (child.isLeft()) {
-	    	x = baseX - childHGap - child.getContent().getX() - child.getContent().getWidth();
-	    	summaryBaseX[level] = Math.min(summaryBaseX[level], x + getSpaceAround());
+	    	childX = baseX - childHGap - child.getContent().getX() - child.getContent().getWidth();
+	    	this.summaryBaseX = Math.min(summaryBaseX[level], childX + getSpaceAround());
 	    }
 	    else {
-	    	x = baseX + childHGap - child.getContent().getX();
-	    	summaryBaseX[level] = Math.max(summaryBaseX[level], x + child.getWidth() - getSpaceAround());
+	    	childX = baseX + childHGap - child.getContent().getX();
+	    	this.summaryBaseX = Math.max(summaryBaseX[level], childX + child.getWidth() - getSpaceAround());
 	    }
-	    data.lx[childIndex] = x;
     }
 
 	private int calcHGap() {
@@ -190,7 +201,4 @@ abstract class ChildPositionCalculator{
 	    return baseX;
     }
 
-	public boolean isChildVisible() {
-		return childHeight != 0;
-	}
 }

@@ -28,32 +28,26 @@ public class SummaryChildPositionCalculator extends ChildPositionCalculator{
 	public SummaryChildPositionCalculator(int spaceAround, int vGap, NodeView child, int oldLevel, int level) {
         super(spaceAround, vGap, child, oldLevel, level);
     }
+
 	@Override
-    public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups) {
+    public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final int[] levels, final GroupMargins[] groups) {
 		final GroupMargins groupMargins = groups[level - 1];
-		int summaryY = (groupMargins.startY + groupMargins.endY) / 2 - childContentHeight / 2
+		childBeginY = (groupMargins.startY + groupMargins.endY) / 2 - childContentHeight / 2
 		        + childShiftY - (child.getContent().getY() - childCloudHeigth / 2 - getSpaceAround());
-		childBeginY = summaryY;
-		data.ly[childIndex] = childBeginY;
-		childEndY = yBefore;
+		int summaryY = childBeginY;
 		if (!child.isFree()) {
-			final int groupShiftRequiredBySummary = groupMargins.startY - summaryY - child.getTopOverlap();
-			if (groupShiftRequiredBySummary > 0) {
-				childEndY += groupShiftRequiredBySummary;
-				summaryY += groupShiftRequiredBySummary;
-				for (int j = groupMargins.start; j <= childIndex; j++) {
-					NodeView groupItem = (NodeView) child.getParent().getComponent(j);
-					if (groupItem.isLeft() == calculateOnLeftSide && (data.summary[j] || !data.free[j]))
-						data.ly[j] += +groupShiftRequiredBySummary;
-				}
-			}
 			if (childHeight != 0) {
-				summaryY += childHeight + getVGap() - child.getBottomOverlap();
+				summaryY = childBeginY + childHeight + getVGap() - child.getBottomOverlap();
 			}
-			childEndY = Math.max(childEndY, summaryY);
-			if (groupShiftRequiredBySummary > 0)
-				topChange -= groupShiftRequiredBySummary;
+			childEndY = Math.max(yBefore, summaryY);
+			groupedItemShiftRequiredBySummary = groupMargins.startY - childBeginY - child.getTopOverlap();
+			if(groupedItemShiftRequiredBySummary > 0){
+				childEndY += groupedItemShiftRequiredBySummary;
+				topChange -= groupedItemShiftRequiredBySummary;
+			}
 		}
+		else
+			childEndY = yBefore;
 	}
 
 	protected void calculateSummaryChildContentHeightSum(final int[] groupStartContentHeightSum) {
@@ -69,7 +63,7 @@ public class SummaryChildPositionCalculator extends ChildPositionCalculator{
     }
 
 	@Override
-    public void chilContentHeightSum(final int[] groupStartContentHeightSum, boolean pVisibleChildFound, int childContentHeightSumBefore) {
+    public void calcChildContentHeightSum(final int[] groupStartContentHeightSum, boolean pVisibleChildFound, int childContentHeightSumBefore) {
 		childContentHeightSum = childContentHeightSumBefore;
 	    calculateSummaryChildContentHeightSum(groupStartContentHeightSum);
     }

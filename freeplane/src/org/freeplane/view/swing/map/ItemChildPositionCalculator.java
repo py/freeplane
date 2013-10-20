@@ -30,21 +30,19 @@ public class ItemChildPositionCalculator extends ChildPositionCalculator{
     }
 
 	@Override
-    public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups) {
+    public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final int[] levels, final GroupMargins[] groups) {
 		topChange = 0;
 		this.childBeginY = yBefore;
 		if (childShiftY < 0 || !visibleChildAlreadyFound)
 		    topChange += childShiftY;
 		childBeginY -= child.getTopOverlap();
 		if (childShiftY < 0) {
-			data.ly[childIndex] = childBeginY;
 			childEndY = childBeginY;
 			childEndY -= childShiftY;
 		}
 		else {
 			if (visibleChildAlreadyFound)
 				childBeginY += childShiftY;
-			data.ly[childIndex] = this.childBeginY;
 			childEndY = childBeginY;
 		}
 		if (childHeight != 0) {
@@ -55,22 +53,17 @@ public class ItemChildPositionCalculator extends ChildPositionCalculator{
 		topChange += child.getTopOverlap();
 	}
 
-	protected void calcItemChildContentHeightSum(final int[] groupStartContentHeightSum, boolean visibleChildFound) {
-	    childContentHeightSum += childContentHeight;
-	    final boolean followsSummary = previousChildLevel > 0;
-	    if (followsSummary)
-	        for (int j = 0; j < previousChildLevel; j++)
-	    		groupStartContentHeightSum[j] = childContentHeightSum;
-	    else if (child.isFirstGroupNode()) {
-	    	groupStartContentHeightSum[0] = childContentHeightSum;
-	    }
-	    if (childHeight != 0 && visibleChildFound)
-	        childContentHeightSum += getVGap();
-    }
-
 	@Override
-    public void chilContentHeightSum(final int[] groupStartContentHeightSum, boolean pVisibleChildFound, int childContentHeightSumBefore) {
-		childContentHeightSum = childContentHeightSumBefore;
-		this.calcItemChildContentHeightSum(groupStartContentHeightSum, pVisibleChildFound);
+    public void calcChildContentHeightSum(final int[] groupStartContentHeightSum, boolean pVisibleChildFound, int childContentHeightSumBefore) {
+		childContentHeightSum = childContentHeightSumBefore + childContentHeight;
+		final boolean followsSummary = this.previousChildLevel > 0;
+		if (followsSummary)
+		    for (int j = 0; j < this.previousChildLevel; j++)
+				groupStartContentHeightSum[j] = this.childContentHeightSum;
+		else if (this.child.isFirstGroupNode()) {
+			groupStartContentHeightSum[0] = this.childContentHeightSum;
+		}
+		if (this.childHeight != 0 && pVisibleChildFound)
+		    this.childContentHeightSum += this.getVGap();
     }
 }
