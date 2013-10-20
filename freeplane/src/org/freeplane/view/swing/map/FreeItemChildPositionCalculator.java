@@ -30,11 +30,10 @@ public class FreeItemChildPositionCalculator extends ChildPositionCalculator{
     }
 	@Override
     public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups) {
-		initY(yBefore, visibleChildAlreadyFound, data, childIndex);
-		calcFreeItemY(data, childIndex);
+		this.childBeginY = yBefore;
+		childBeginY = childShiftY - childContentShift - childCloudHeigth / 2 - getSpaceAround();
+		data.ly[childIndex] = childBeginY;
+		this.childEndY = yBefore;
 	}
-	protected void calcFreeItemY(final LayoutData data, int i) {
-	    data.ly[i] = childShiftY - childContentShift - childCloudHeigth / 2 - getSpaceAround();
-    }
 
 }

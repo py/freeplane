@@ -36,10 +36,7 @@ abstract class ChildPositionCalculator{
 	            return new ItemChildPositionCalculator(spaceAround, vGap, child, previousChildLevel, level);
 	    }
         else
-        	if (child.isFree())
-        		return new FreeSummaryChildPositionCalculator(spaceAround, vGap, child, previousChildLevel, level);
-        	else
-        		return new SummaryChildPositionCalculator(spaceAround, vGap, child, previousChildLevel, level);
+       		return new SummaryChildPositionCalculator(spaceAround, vGap, child, previousChildLevel, level);
     }
 
 	protected final NodeView child;
@@ -53,17 +50,43 @@ abstract class ChildPositionCalculator{
 	protected final int childShiftY;
 	protected final int childContentShift;
 	protected final boolean isItem;
+	protected int topChange;
 
-	protected int top;
+	public int getChildHeight() {
+		return childHeight;
+	}
+
+	public int getChildCloudHeigth() {
+		return childCloudHeigth;
+	}
+
+	public int getChildContentHeight() {
+		return childContentHeight;
+	}
+
+	public int getChildShiftY() {
+		return childShiftY;
+	}
+
+	public int getChildContentShift() {
+		return childContentShift;
+	}
+
+
 	public int getTopChange() {
-		return top;
+		return topChange;
 	}
 
-	public int getY() {
-		return y;
+	public int getChildEndY() {
+		return childEndY;
 	}
 
-	protected int y;
+	protected int childBeginY;
+	public int getChildBeginY() {
+		return childBeginY;
+	}
+
+	protected int childEndY;
 	protected int childContentHeightSum;
 
 
@@ -95,16 +118,16 @@ abstract class ChildPositionCalculator{
 	}
 
 	public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups){
-		initY(yBefore, visibleChildAlreadyFound, data, childIndex);
+		childBeginY = yBefore;
+		childEndY = yBefore;
 	}
 
-	protected void initY(int yBefore, boolean visibleChildAlreadyFound, final LayoutData data, int i) {
-	    this.top = 0;
-		this.y = yBefore;
-    }
+	public int getGroupBegin() {
+		return  childBeginY + child.getTopOverlap();
+	}
 
-	protected void setGroupMargins(final LayoutData data, final GroupMargins[] groups, int i) {
-		groups[level].setMargins(child.isFirstGroupNode(), data.ly[i] + child.getTopOverlap(), data.ly[i] + childHeight - child.getBottomOverlap());
+	public int getGroupEnd() {
+	    return childBeginY + childHeight - child.getBottomOverlap();
     }
 
 	protected int getVGap() {
@@ -169,5 +192,14 @@ abstract class ChildPositionCalculator{
 
 	public boolean isChildVisible() {
 		return childHeight != 0;
+	}
+
+	protected void updateGroupStart(int childIndex, final GroupMargins[] groups) {
+	    final boolean followsSummary = this.previousChildLevel > 0;
+		if (followsSummary)
+		    for (int j = 0; j < this.previousChildLevel; j++)
+				groups[j].beginFrom(childIndex);
+		else if (this.child.isFirstGroupNode())
+			groups[level].beginFrom(childIndex);
 	}
 }

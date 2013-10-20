@@ -30,44 +30,33 @@ public class SummaryChildPositionCalculator extends ChildPositionCalculator{
     }
 	@Override
     public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups) {
-		initY(yBefore, visibleChildAlreadyFound, data, childIndex);
-        calcSummaryY(calculateOnLeftSide, data, groups, childIndex);
-
-	}
-
-	protected void calcSummaryY(final boolean calculateOnLeftSide, final LayoutData data, final GroupMargins[] groups,
-	                              int i) {
-		    final GroupMargins groupMargins = groups[level - 1];
-		    if (child.isFirstGroupNode()) {
-		    	groups[level].start = groupMargins.start;
-		    }
-		    int summaryY = (groupMargins.startY + groupMargins.endY) / 2 - childContentHeight / 2
-		            + childShiftY - (child.getContent().getY() - childCloudHeigth / 2 - getSpaceAround());
-		    data.ly[i] = summaryY;
-		    if (!child.isFree()) {
-		    	changeGroupedItemYPositions(calculateOnLeftSide, data, i, groups[level - 1], summaryY);
-		    }
-	    	setGroupMargins(data, groups, i);
-	}
-
-	protected void changeGroupedItemYPositions(final boolean calculateOnLeftSide, final LayoutData data, int i,
-	                                             final GroupMargins groupMargins, int summaryY) {
-		    final int deltaY = summaryY - groupMargins.startY + child.getTopOverlap();
-		    if (deltaY < 0) {
-		    	y -= deltaY;
-		    	summaryY -= deltaY;
-		    	for (int j = groupMargins.start; j <= i; j++) {
-		    		NodeView groupItem = (NodeView) child.getParent().getComponent(j);
-		    		if (groupItem.isLeft() == calculateOnLeftSide && (data.summary[j] || !data.free[j]))
-		    			data.ly[j] -= deltaY;
-		    	}
-		    }
-		    if (childHeight != 0) {
-		    	summaryY += childHeight + getVGap() - child.getBottomOverlap();
-		    }
-		    y = Math.max(y, summaryY);
-		    if (deltaY < 0)
-		    	top += deltaY;
+        final GroupMargins groupMargins = groups[level - 1];
+		if (child.isFirstGroupNode()) {
+			groups[level].beginFrom(groupMargins.start);
+		}
+		int summaryY = (groupMargins.startY + groupMargins.endY) / 2 - childContentHeight / 2
+		        + childShiftY - (child.getContent().getY() - childCloudHeigth / 2 - getSpaceAround());
+		childBeginY = summaryY;
+		data.ly[childIndex] = childBeginY;
+		childEndY = yBefore;
+		if (!child.isFree()) {
+			final int groupShiftRequiredBySummary = groupMargins.startY - summaryY - child.getTopOverlap();
+			if (groupShiftRequiredBySummary > 0) {
+				childEndY += groupShiftRequiredBySummary;
+				summaryY += groupShiftRequiredBySummary;
+				for (int j = groupMargins.start; j <= childIndex; j++) {
+					NodeView groupItem = (NodeView) child.getParent().getComponent(j);
+					if (groupItem.isLeft() == calculateOnLeftSide && (data.summary[j] || !data.free[j]))
+						data.ly[j] += +groupShiftRequiredBySummary;
+				}
+			}
+			if (childHeight != 0) {
+				summaryY += childHeight + getVGap() - child.getBottomOverlap();
+			}
+			childEndY = Math.max(childEndY, summaryY);
+			if (groupShiftRequiredBySummary > 0)
+				topChange -= groupShiftRequiredBySummary;
+		}
 	}
 
 	protected void calculateSummaryChildContentHeightSum(final int[] groupStartContentHeightSum) {

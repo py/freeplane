@@ -31,38 +31,30 @@ public class ItemChildPositionCalculator extends ChildPositionCalculator{
 
 	@Override
     public void calcChildY(int childIndex, int yBefore, boolean visibleChildAlreadyFound, final boolean calculateOnLeftSide, final LayoutData data, final int[] levels, final GroupMargins[] groups) {
-		initY(yBefore, visibleChildAlreadyFound, data, childIndex);
-		this.calcItemY(data, groups, childIndex, visibleChildAlreadyFound);
+		topChange = 0;
+		this.childBeginY = yBefore;
+		updateGroupStart(childIndex, groups);
+		if (childShiftY < 0 || !visibleChildAlreadyFound)
+		    topChange += childShiftY;
+		childBeginY -= child.getTopOverlap();
+		if (childShiftY < 0) {
+			data.ly[childIndex] = childBeginY;
+			childEndY = childBeginY;
+			childEndY -= childShiftY;
+		}
+		else {
+			if (visibleChildAlreadyFound)
+				childBeginY += childShiftY;
+			data.ly[childIndex] = this.childBeginY;
+			childEndY = childBeginY;
+		}
+		if (childHeight != 0) {
+			childEndY += childHeight + getVGap();
+			childEndY -= child.getBottomOverlap();
+		}
+		topChange -= childContentShift;
+		topChange += child.getTopOverlap();
 	}
-
-	public void calcItemY(final LayoutData data, final GroupMargins[] groups, int i, final boolean visibleChildFound) {
-	    final boolean followsSummary = previousChildLevel > 0;
-	    if (followsSummary)
-	        for (int j = 0; j < previousChildLevel; j++)
-	    		groups[j].beginFrom(i);
-	    else if (child.isFirstGroupNode())
-	        groups[0].start = i;
-
-	    if (childShiftY < 0 || !visibleChildFound)
-	        top += childShiftY;
-	    y -= child.getTopOverlap();
-	    if (childShiftY < 0) {
-	    	data.ly[i] = y;
-	    	y -= childShiftY;
-	    }
-	    else {
-	    	if (visibleChildFound)
-	    		y += childShiftY;
-	    	data.ly[i] = y;
-	    }
-	    if (childHeight != 0) {
-	    	y += childHeight + getVGap();
-	    	y -= child.getBottomOverlap();
-	    }
-	    top -= childContentShift;
-	    top += child.getTopOverlap();
-    	setGroupMargins(data, groups, i);
-    }
 
 	protected void calcItemChildContentHeightSum(final int[] groupStartContentHeightSum, boolean visibleChildFound) {
 	    childContentHeightSum += childContentHeight;

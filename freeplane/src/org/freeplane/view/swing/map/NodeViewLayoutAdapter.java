@@ -262,8 +262,11 @@ abstract public class NodeViewLayoutAdapter implements INodeViewLayout {
 			data.free[childIndex] = child.isFree();
 			final ChildPositionCalculator childPositionCalculator = ChildPositionCalculator.create(child, spaceAround, vGap, oldLevel, level);
 			childPositionCalculator.calcChildY(childIndex, y, visibleChildFound, calculateOnLeftSide, data, levels, groups);
+			if(! child.isFree())
+	            groups[childPositionCalculator.level].setMargins(child.isFirstGroupNode(), childPositionCalculator.getGroupBegin(), childPositionCalculator.getGroupEnd());
 			top += childPositionCalculator.getTopChange();
-			y = childPositionCalculator.getY();
+			if(! child.isFree())
+				y = childPositionCalculator.getChildEndY();
 			childPositionCalculator.chilContentHeightSum(groupStartContentHeightSum, visibleChildFound, childContentHeightSum);
 			childContentHeightSum = childPositionCalculator.getChildContentHeightSum();
 			childPositionCalculator.calcChildRelativeXPosition(data, summaryBaseX, childIndex, contentWidth);
